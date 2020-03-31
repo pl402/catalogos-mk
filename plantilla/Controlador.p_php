@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Controllers;
+use Illuminate\Http\Request;
+use App\Singular;
+
+class SingularController extends Controller
+{
+    function index(Request $request){
+        if($request->isJson()){
+            $singular = Singular::all();
+            return response()->json($singular,200);
+        }else{
+            return response()->json(['error'=>'No Autorizado'],401);
+        }
+    }
+
+    function store(Request $request){
+        if($request->isJson()){
+            $singular = new Singular;
+lista_campos_controlador
+            $singular->save();
+            return response()->json(["text"=>"Registro guardado con exito","type"=>"success"],201);
+        }else{
+            return response()->json(['text'=>'Error al crear el registro',"type"=>"error"],401);
+        }
+    }
+
+    function show($id){
+    //  return response()->json($response,200);
+    }
+
+    function update(Request $request, $id){
+        if($request->isJson()){
+            $singular = Singular::find($id);
+lista_campos_controlador
+            $singular->save();
+            return response()->json(["text"=>"Registro modificado con exito","type"=>"success"],200);
+        }else{
+            return response()->json(['text'=>'Error al modificar el registro',"type"=>"error"],401);
+        }
+
+    }
+
+    function destroy($id){
+        $singular = Singular::find($id);
+        $singular->delete();
+        return response()->json(["text"=>"Se ha eliminado el registro","type"=>"success"],200);
+    }
+}

@@ -1,0 +1,344 @@
+import React, { Component } from "react";
+import Layout from "./Layout";
+import PropagateLoader from "react-spinners/PropagateLoader";
+import BootstrapTable from "react-bootstrap-table-next";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus, faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { Modal, Button } from "react-bootstrap";
+import ToolkitProvider, { Search } from "react-bootstrap-table2-toolkit";
+import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+import "react-bootstrap-table-next/dist/react-bootstrap-table2.min.css";
+import "react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.min.css";
+import paginationFactory from "react-bootstrap-table2-paginator";
+import ReactTooltip from "react-tooltip";
+
+class Plural extends Component {
+  constructor(props) {
+    super(props);
+    this.GetActionFormat = this.GetActionFormat.bind(this);
+    this.state = {
+      // Estado relacionado con el modelo
+lista_campos_estado
+      // Estados para la ventana modal
+      modal: false, // ventana modal generica para modificar y Nuevo cerrada
+      modalEliminar: false, //Modal Eliminar
+      modalAccion: "", // Acción del boton principal de la ventana modal para el switch
+      modalTitle: "", // Titulo para la ventana modal generica
+      plural: [], // Listado de elementos para la tabla
+      loading: false
+    };
+  }
+
+  componentDidMount = () => {
+    this.cargaTabla();
+  };
+  componentDidUpdate() {
+    ReactTooltip.rebuild();
+  }
+
+  cargaTabla = () => {
+    this.setState({ loading: true });
+    axios
+      .get(
+        "https://cnsgd.siapp.mx/api/Singular",
+        { data: {} }, //aunque este vacio se necesita mandar data para que envie el Content-Type
+        {
+          headers: { "Content-Type": "application/Json" }
+        }
+      )
+      .then(res => {
+        this.setState({ plural: res.data, loading: false });
+      });
+  };
+
+  showModalEliminar = () => {
+    this.setState({ modalEliminar: true });
+  };
+
+  closeModalEliminar = () => {
+    this.setState({ modalEliminar: false });
+  };
+
+  showModal = () => {
+    this.setState({ modal: true });
+  };
+
+  closeModal = () => {
+    this.setState({ modal: false });
+  };
+
+  ModalNuevo = () => {
+    this.showModal();
+    this.setState({
+      modalLabel: "Guardar",
+      variante: "primary",
+      modalAccion: "insert",
+      modalTitle: "Registro nuevo",
+lista_campos_estado_nuevo
+    });
+  };
+
+  ModalModificar = row => {
+    this.showModal();
+    this.setState({
+      modalLabel: "Modificar",
+      variante: "warning",
+      modalAccion: "update",
+      modalTitle: "Modificación",
+lista_campos_estado_row
+    });
+  };
+
+  ModalEliminar = row => {
+    this.showModalEliminar();
+    this.setState({
+      modalAccion: "delete",
+lista_campos_estado_row
+    });
+  };
+
+  ejecutar = e => {
+    e.preventDefault();
+    this.setState({ loading: true });
+    switch (this.state.modalAccion) {
+      case "update":
+        this.actualiza();
+        break;
+      case "insert":
+        this.registra();
+        break;
+      case "delete":
+        this.borra();
+        break;
+      default:
+    }
+  };
+
+  registra = () => {
+    // const { addToast } = useToasts();
+    let data = {
+      //Recoger la información para el registro
+lista_campo_data
+    };
+    let config = {};
+
+    axios
+      .post("https://cnsgd.siapp.mx/api/Singular", data, config)
+      .then(res => {
+        this.closeModal();
+        toast.success(res.data.text, { autoClose: 1000 });
+        this.cargaTabla();
+        this.setState({ loading: false });
+      });
+  };
+
+  actualiza = () => {
+    let data = {
+      //Recoger la información para el registro
+lista_campo_id_data
+    };
+    let config = {};
+
+    axios
+      .put(
+        "https://cnsgd.siapp.mx/api/Singular/" + this.state.id,
+        data,
+        config
+      )
+      .then(res => {
+        this.closeModal();
+        toast.success(res.data.text, { autoClose: 1000 });
+        this.cargaTabla();
+        this.setState({ loading: false });
+      });
+  };
+
+  borra = () => {
+    axios
+      .delete(
+        "https://cnsgd.siapp.mx/api/Singular/" + this.state.id
+      )
+      .then(res => {
+        this.closeModalEliminar();
+        toast.success(res.data.text, { autoClose: 1000 });
+        this.cargaTabla();
+        this.setState({ loading: false });
+      });
+  };
+
+lista_on_change
+
+  GetActionFormat = (cell, row) => {
+    return (
+      <div>
+        <button
+          type="button"
+          className="btn btn-outline-primary btn-sm ts-buttom"
+          size="sm"
+          onClick={() => this.ModalModificar(row)}
+          data-tip="Modificar"
+        >
+          <FontAwesomeIcon icon={faEdit} size="lg" />
+        </button>
+        <button
+          type="button"
+          className="btn btn-outline-danger btn-sm ml-2 ts-buttom"
+          size="sm"
+          onClick={() => this.ModalEliminar(row)}
+          data-tip="Eliminar"
+        >
+          <FontAwesomeIcon icon={faTrash} size="lg" />
+        </button>
+      </div>
+    );
+  };
+
+  render() {
+    const columns = [
+      {
+        dataField: "id",
+        text: "ID",
+        headerStyle: () => {
+          return { width: "10%" };
+        }
+      },
+lista_campo_tabla
+      {
+        dataField: "",
+        text: "Acción",
+        formatter: this.GetActionFormat,
+        classes: "p-1",
+        headerStyle: () => {
+          return { width: "25%" };
+        }
+      }
+    ];
+
+    const { SearchBar } = Search;
+
+    return (
+      <Layout>
+        <ToastContainer />
+        <div
+          id="cargando"
+          className={this.state.loading ? "parentDisable" : ""}
+          width="100%"
+        >
+          <div className="overlay-box">
+            <PropagateLoader
+              // css={}
+              sizeUnit={"px"}
+              size={25}
+              color={"#000000"}
+              loading={this.state.loading}
+            />
+          </div>
+        </div>
+
+        <div className="container mt-3">
+          <div className="row">
+            <div className="col">
+              <h3 className="d-inline">Catálogo de Plural</h3>{" "}
+              <small className="text-muted">
+                Registre Elimine o Modifique Plural,
+                estos elementos estan ligados a los usuarios de el sistema.
+              </small>
+            </div>
+          </div>
+
+          <div className="row mt-3">
+            <div className="col-12 ">
+              <ToolkitProvider
+                keyField="id"
+                data={this.state.plural}
+                columns={columns}
+                bootstrap4
+                search
+              >
+                {props => (
+                  <div>
+                    <div className="row">
+                      <div className="col-6">
+                        <button
+                          className="btn btn-primary"
+                          onClick={this.ModalNuevo}
+                          data-tip="Nuevo"
+                        >
+                          <FontAwesomeIcon icon={faPlus} /> Nuevo
+                        </button>
+                      </div>
+                      <div className="col-6 text-right">
+                        <SearchBar
+                          placeholder="Buscar..."
+                          {...props.searchProps}
+                          className="self-align-end"
+                        />
+                      </div>
+                    </div>
+
+                    <BootstrapTable
+                      {...props.baseProps}
+                      pagination={paginationFactory()}
+                      hover
+                    />
+                  </div>
+                )}
+              </ToolkitProvider>{" "}
+            </div>
+          </div>
+        </div>
+
+        <Modal //***************************Modal para nuevo y modificar
+          show={this.state.modal}
+          onHide={this.closeModal}
+          size="lg"
+          centered
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>{this.state.modalTitle}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+lista_inputs
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={this.closeModal}>
+              Cancelar
+            </Button>
+            <Button variant={this.state.variante} onClick={this.ejecutar}>
+              {this.state.modalLabel}
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        <Modal //*******************************Modal para eliminar
+          show={this.state.modalEliminar}
+          onHide={this.closeModalEliminar}
+          size="sm"
+          centered
+        >
+          <Modal.Header>
+            <Modal.Title>Eliminar</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            Seguro que desea eliminar este registro{" "}
+            <strong>{this.state.nom_direccion}</strong> ?
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={this.closeModalEliminar}>
+              Cancelar
+            </Button>
+            <Button variant="danger" onClick={this.ejecutar}>
+              Eliminar
+            </Button>
+          </Modal.Footer>
+        </Modal>
+        <ReactTooltip />
+      </Layout>
+    );
+  }
+}
+
+export default Plural;

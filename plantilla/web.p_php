@@ -1,0 +1,6 @@
+//Rutas para el catalogo de plural
+$router->get('/Singular', 'SingularController@index');
+$router->post('/Singular', 'SingularController@store');
+$router->get('/Singular/{id}', 'SingularController@show');
+$router->put('/Singular/{id}', 'SingularController@update');
+$router->delete('/Singular/{id}', 'SingularController@destroy');
