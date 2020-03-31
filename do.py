@@ -5,7 +5,7 @@
 
 import pymysql
 import json
-
+import os
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -33,6 +33,17 @@ f = open("plantilla/web.p_php", "r")
 Web_org_php = f.read()
 f.close()
 Web_all = ""
+
+#Crea directorios de salida
+if not os.path.exists("salida"):
+    os.makedirs("salida")
+if not os.path.exists("salida/Modelos"):
+    os.makedirs("salida/Modelos/")
+if not os.path.exists("salida/Controlador"):
+    os.makedirs("salida/Controlador")
+if not os.path.exists("salida/React"):
+    os.makedirs("salida/React")
+
 for tablas in data:
     Modelo_php = ''
     tabla = tablas[0]
