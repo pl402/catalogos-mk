@@ -1,14 +1,9 @@
-#!/usr/bin/python
+#!//usr/bin/python3
 # -*- coding: latin-1 -*-
-
-#!/usr/bin/python3
 
 import pymysql
 import json
 import os
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
 
 def to_camel_case(snake_str):
     components = snake_str.split('_')
@@ -18,31 +13,34 @@ def to_title(snake_str):
     components = snake_str.split('_')
     return ' '.join(x.title() for x in components)
 
-
+# CONFIG DATA
 host = "HOST"
 user = "USER"
 password = "PASSWORD"
-database = "DATABASE"
+database = "DATA_BASE"
+url_laravel_api = "HTTPS://URL.API/"
+
+op_dir = os.path.dirname(os.path.realpath(__file__))
+
 db = pymysql.connect(host, user, password, database)
 cursor = db.cursor()
-
 cursor.execute("SHOW tables")
 data = cursor.fetchall()
 
-f = open("plantilla/web.p_php", "r")
+f = open(op_dir + "/plantilla/web.p_php", "r")
 Web_org_php = f.read()
 f.close()
 Web_all = ""
 
 #Crea directorios de salida
-if not os.path.exists("salida"):
-    os.makedirs("salida")
-if not os.path.exists("salida/Modelos"):
-    os.makedirs("salida/Modelos/")
-if not os.path.exists("salida/Controlador"):
-    os.makedirs("salida/Controlador")
-if not os.path.exists("salida/React"):
-    os.makedirs("salida/React")
+if not os.path.exists(op_dir + "/salida"):
+    os.makedirs(op_dir + "/salida")
+if not os.path.exists(op_dir + "/salida/Modelos"):
+    os.makedirs(op_dir + "/salida/Modelos/")
+if not os.path.exists(op_dir + "/salida/Controlador"):
+    os.makedirs(op_dir + "/salida/Controlador")
+if not os.path.exists(op_dir + "/salida/React"):
+    os.makedirs(op_dir + "/salida/React")
 
 for tablas in data:
     Modelo_php = ''
@@ -108,33 +106,34 @@ for tablas in data:
     llave_primaria = cursor.fetchall()[0][4]
 
     #Modelo
-    f = open("plantilla/Model.p_php", "r")
+    f = open(op_dir + "/plantilla/Model.p_php", "r")
     Modelo_php = f.read()
     f.close()
     Modelo_php = Modelo_php.replace("tabla", tabla)
     Modelo_php = Modelo_php.replace("Singular", Singular)
     Modelo_php = Modelo_php.replace("lista_campos", lista_campos)
-    text_file = open("salida/Modelos/" + Singular + ".php", "w")
+    text_file = open(op_dir + "/salida/Modelos/" + Singular + ".php", "w")
     text_file.write(Modelo_php)
     text_file.close()
-    print("salida/Modelos/" + Singular + ".php")
+    print(op_dir + "/salida/Modelos/" + Singular + ".php")
 
     #Controlador
-    f = open("plantilla/Controlador.p_php", "r")
+    f = open(op_dir + "/plantilla/Controlador.p_php", "r")
     Controlador_php = f.read()
     f.close()
     Controlador_php = Controlador_php.replace("Singular", Singular)
     Controlador_php = Controlador_php.replace("singular", singular)
     Controlador_php = Controlador_php.replace("lista_campos_controlador", lista_campos_controlador)
-    text_file = open("salida/Controlador/" + Singular + "Controller.php", "w")
+    text_file = open(op_dir + "/salida/Controlador/" + Singular + "Controller.php", "w")
     text_file.write(Controlador_php)
     text_file.close()
-    print("salida/Controlador/" + Singular + "Controller.php")
+    print(op_dir + "/salida/Controlador/" + Singular + "Controller.php")
 
     #React
-    f = open("plantilla/React.p_js", "r")
+    f = open(op_dir + "/plantilla/React.p_js", "r")
     React_js = f.read()
     f.close()
+    React_js = React_js.replace("url_laravel_api", url_laravel_api)
     React_js = React_js.replace("Singular", Singular)
     React_js = React_js.replace("singular", singular)
     React_js = React_js.replace("Plural", Plural)
@@ -147,10 +146,10 @@ for tablas in data:
     React_js = React_js.replace("lista_inputs", lista_inputs)
     React_js = React_js.replace("lista_campos_estado", lista_campos_estado)
     React_js = React_js.replace("lista_campo_id_data", lista_campo_id_data)
-    text_file = open("salida/React/" + Plural + ".js", "w")
+    text_file = open(op_dir + "/salida/React/" + Plural + ".js", "w")
     text_file.write(React_js)
     text_file.close()
-    print("salida/React/" + Plural + ".js")
+    print(op_dir + "/salida/React/" + Plural + ".js")
 
     #Web
     Web_php = Web_org_php
@@ -158,14 +157,14 @@ for tablas in data:
     Web_php = Web_php.replace("plural", plural)
     Web_all += Web_php + "\n\n"
 
-f = open("plantilla/web_done.p_php", "r")
+f = open(op_dir + "/plantilla/web_done.p_php", "r")
 Web_done = f.read()
 f.close()
 Web_done = Web_done.replace("lista_rutas", Web_all)
 
-text_file = open("salida/web.php", "w")
+text_file = open(op_dir + "/salida/web.php", "w")
 text_file.write(Web_done)
 text_file.close()
 
-print("salida/web.php")
+print(op_dir + "/salida/web.php")
 db.close()
