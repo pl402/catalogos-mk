@@ -1,0 +1,24 @@
+import React, { Component } from "react";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
+import Login from "./Login";
+import Escritorio from "./Escritorio";
+//lista_imports_app
+import Logout from "./Logout";
+import "./estilos.css";
+
+class App extends Component {
+  render() {
+    return (
+      <BrowserRouter>
+        <Switch>
+          <Route exact path="/" component={Login} />
+          <Route exact path="/escritorio" component={Escritorio} />
+          <Route exact path="/logout" component={Logout} />
+          lista_route_app
+        </Switch>
+      </BrowserRouter>
+    );
+  }
+}
+
+export default App;

@@ -14,13 +14,18 @@ def to_title(snake_str):
     return ' '.join(x.title() for x in components)
 
 # CONFIG DATA
-host = "er.administracionpublica.mx"
-user = "admin_er"
-password = "cOZ0yoZxV3"
-database = "admin_er"
-url_laravel_api = "https://er.administracionpublica.mx/api/"
 
 op_dir = os.path.dirname(os.path.realpath(__file__))
+
+with open(op_dir + "/config.json") as f:
+  config = json.load(f)
+
+
+host = config["host"]
+user = config["user"]
+password = config["password"]
+database = config["database"]
+url_laravel_api = config["url_laravel_api"]
 
 db = pymysql.connect(host, user, password, database)
 cursor = db.cursor()
@@ -31,6 +36,9 @@ f = open(op_dir + "/plantilla/web.p_php", "r")
 Web_org_php = f.read()
 f.close()
 Web_all = ""
+
+App_imports = ""
+App_route = ""
 
 #Crea directorios de salida
 if not os.path.exists(op_dir + "/salida"):
@@ -151,11 +159,25 @@ for tablas in data:
     text_file.close()
     print(op_dir + "/salida/React/" + Plural + ".js")
 
-    #Web
+    #Rutas React
+    App_imports += "import " + Plural + " from \"./" + Plural + "\";\n"
+    App_route += "          <Route exact path=\"/" + plural + "\" component={" + Plural + "} />\n"
+
+    #Rutas Laravel
     Web_php = Web_org_php
     Web_php = Web_php.replace("Singular", Singular)
     Web_php = Web_php.replace("plural", plural)
     Web_all += Web_php + "\n\n"
+
+f = open(op_dir + "/plantilla/App.p_js", "r")
+App_p = f.read()
+f.close()
+App_p = App_p.replace("//lista_imports_app", App_imports)
+App_p = App_p.replace("lista_route_app", App_route)
+text_file = open(op_dir + "/salida/App.js", "w")
+text_file.write(App_p)
+text_file.close()
+print(op_dir + "/salida/App.js")
 
 f = open(op_dir + "/plantilla/web_done.p_php", "r")
 Web_done = f.read()
