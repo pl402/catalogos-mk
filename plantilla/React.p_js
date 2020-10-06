@@ -118,7 +118,8 @@ lista_campos_estado_row
   registra = () => {
     let data = {
       //Recoger la información para el registro
-lista_campo_data
+lista_campo_data,
+      api_token:sessionStorage.api_token
     };
     let config = {};
 
@@ -135,7 +136,8 @@ lista_campo_data
   actualiza = () => {
     let data = {
       //Recoger la información para el registro
-lista_campo_id_data
+lista_campo_id_data,
+      api_token:sessionStorage.api_token
     };
     let config = {};
 

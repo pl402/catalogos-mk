@@ -14,11 +14,11 @@ def to_title(snake_str):
     return ' '.join(x.title() for x in components)
 
 # CONFIG DATA
-host = "HOST"
-user = "USER"
-password = "PASSWORD"
-database = "DATA_BASE"
-url_laravel_api = "HTTPS://URL.API/"
+host = "er.administracionpublica.mx"
+user = "admin_er"
+password = "cOZ0yoZxV3"
+database = "admin_er"
+url_laravel_api = "https://er.administracionpublica.mx/api/"
 
 op_dir = os.path.dirname(os.path.realpath(__file__))
 
