@@ -1,7 +1,7 @@
 {
-  "host": "HOST_MYSQL",
-  "user": "USER_MYSQL",
-  "password": "PASSWORD_MYSQL",
-  "database": "DATABASE_MYSQL",
-  "url_laravel_api": "HTTPS://API.URL/"
+  "host": "er.administracionpublica.mx",
+  "user": "admin_er",
+  "password": "cOZ0yoZxV3",
+  "database": "admin_er",
+  "url_laravel_api": "https://er.administracionpublica.mx/api/"
 }
