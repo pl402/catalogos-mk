@@ -56,6 +56,10 @@ for tablas in data:
     cursor.execute("SHOW columns FROM " + tabla + ";")
     campos = cursor.fetchall()
 
+
+    cursor.execute("SELECT * FROM anexos WHERE clave like '" + tabla.replace("f", "") + "';")
+    fdata = cursor.fetchone()
+
     datos = cursor.fetchall()
     cursor.execute("SELECT table_comment FROM INFORMATION_SCHEMA.TABLES WHERE table_schema='" + database + "' AND table_name='" + tabla + "';")
     json_comment = cursor.fetchone()[0]
@@ -65,6 +69,13 @@ for tablas in data:
     singular = parsed_json["singular"]
     Singular = singular.capitalize()
 
+    Titulo_Formulario = "Catálogo de" + Plural
+    json_tooltips = False
+    if fdata:
+        Titulo_Formulario = fdata[2]
+        if fdata[4]:
+            json_tooltips = (json.loads(fdata[4]))
+        
     lista_campos = ''
     lista_campos_controlador = ''
     lista_campos_estado = "      id: \"\",\n"
@@ -75,6 +86,7 @@ for tablas in data:
     lista_on_change = ""
     lista_campo_tabla = ""
     lista_inputs = ""
+    lista_visualizar = ""
     coma = 0
     for campo in campos:
         if campo[0] != 'id':
@@ -89,26 +101,74 @@ for tablas in data:
             lista_campos_estado += "      " + campo[0] + ": \"\",\n"
             lista_campos_estado_row += "      " + campo[0] + ": row." + campo[0]
             lista_campos_estado_nuevo += "      " + campo[0] + ": \"\""
-            lista_campo_data += "      " + campo[0] + ": this.state." + campo[0]
-            lista_campo_id_data += "      " + campo[0] + ": this.state." + campo[0]
+            if campo[0] == "ambito_id":
+                lista_campo_data += "      " + campo[0] + ": this.props.match.params.ambito_id"
+                lista_campo_id_data += "      " + campo[0] + ": this.props.match.params.ambito_id" 
+            elif campo[0] == "usuario_id":
+                lista_campo_data += "      " + campo[0] + ": sessionStorage.id"
+                lista_campo_id_data += "      " + campo[0] + ": sessionStorage.id"
+            else:
+                lista_campo_data += "      " + campo[0] + ": this.state." + campo[0]
+                lista_campo_id_data += "      " + campo[0] + ": this.state." + campo[0]
+
             campo_camel = to_camel_case(campo[0])
             campo_titulo = to_title(campo[0])
             lista_on_change += "  onChange" + campo_camel + " = e => {\n"
             lista_on_change += "    this.setState({ " + campo[0] + ": e.target.value });\n"
             lista_on_change += "  };\n\n"
-            lista_campo_tabla += "      {\n"
-            lista_campo_tabla += "        dataField: \"" + campo[0] + "\",\n"
-            lista_campo_tabla += "        text: \"" + campo_titulo + "\",\n"
-            lista_campo_tabla += "        sort: true\n"
-            lista_campo_tabla += "      },\n"
-            lista_inputs += "            " + campo_titulo + ":\n"
-            lista_inputs += "            <input\n"
-            lista_inputs += "              className=\"form-control\"\n"
-            lista_inputs += "              type=\"text\"\n"
-            lista_inputs += "              name=\"" + campo[0] + "\"\n"
-            lista_inputs += "              value={this.state." + campo[0] + "}\n"
-            lista_inputs += "              onChange={this.onChange" + campo_camel + "}\n"
-            lista_inputs += "            />\n"
+
+            if campo[0] != "usuario_id" and campo[0] != "ambito_id":
+                lista_campo_tabla += "      {\n"
+                lista_campo_tabla += "        dataField: \"" + campo[0] + "\",\n"
+                lista_campo_tabla += "        text: \"" + campo_titulo + "\",\n"
+                lista_campo_tabla += "        sort: true,\n"
+                lista_campo_tabla += "        headerStyle: () => { return {width: \"170px\"};}},\n"
+
+                lista_visualizar += "                  <Row>\n"
+                lista_visualizar += "                      <Col xs={2} className=\"text-muted\">\n"
+                lista_visualizar += "                          " + campo_titulo + ":\n"
+                lista_visualizar += "                      </Col>\n"
+                lista_visualizar += "                      <Col xs={10}>{this.state." + campo[0] + "}</Col>\n"
+                lista_visualizar += "                  </Row>\n"
+
+                lista_inputs += "            <Col xs=\"4\">\n"
+                lista_inputs += "               <Form.Label>\n"
+                lista_inputs += "               " + campo_titulo + ":\n"
+                lista_inputs += "                   <OverlayTrigger trigger=\"focus\" placement=\"right\" overlay={popover}>\n"
+                lista_inputs += "                       <Button\n"
+                lista_inputs += "                       variant=\"light\"\n"
+                lista_inputs += "                       onClick={(e) => {\n"
+
+                este_campo = campo[0]
+                este_tooltip = "Este campo no tiene ayuda."
+                if json_tooltips:
+                    if este_campo in json_tooltips:
+                        este_tooltip = json_tooltips[este_campo]
+                
+                lista_inputs += "                       this.setState({ input_tooltip: \"" + este_tooltip + "\" });\n"
+                lista_inputs += "                     }}\n"
+                lista_inputs += "                   >\n"
+                lista_inputs += "                       <FontAwesomeIcon icon={faQuestionCircle} />\n"
+                lista_inputs += "                   </Button>\n"
+                lista_inputs += "               </OverlayTrigger>\n"
+                lista_inputs += "            </Form.Label>\n"
+                lista_inputs += "            <Form.Control\n"
+                if "int" in campo[1]:
+                    lista_inputs += "              type=\"number\"\n"
+                elif "date" in campo[1]:
+                    lista_inputs += "              type=\"date\"\n"
+                elif "decimal" in campo[1]:
+                    lista_inputs += "              type=\"number\"\n"
+                    lista_inputs += "              step=\"0.01\"\n"
+                else:
+                    lista_inputs += "              type=\"text\"\n"
+                
+                lista_inputs += "              name=\"" + campo[0] + "\"\n"
+                lista_inputs += "              value={this.state." + campo[0] + "}\n"
+                lista_inputs += "              onChange={this.onChange" + campo_camel + "}\n"
+                lista_inputs += "            />\n"
+                lista_inputs += "            </Col>\n"
+
             coma += 1
     cursor.execute("SHOW KEYS FROM " + tabla + " WHERE Key_name = 'PRIMARY';")
     llave_primaria = cursor.fetchall()[0][4]
@@ -141,6 +201,7 @@ for tablas in data:
     f = open(op_dir + "/plantilla/React.p_js", "r")
     React_js = f.read()
     f.close()
+    React_js = React_js.replace("Titulo_Formulario", Titulo_Formulario)
     React_js = React_js.replace("url_laravel_api", url_laravel_api)
     React_js = React_js.replace("Singular", Singular)
     React_js = React_js.replace("singular", singular)
@@ -149,19 +210,26 @@ for tablas in data:
     React_js = React_js.replace("lista_campos_estado_row", lista_campos_estado_row)
     React_js = React_js.replace("lista_campos_estado_nuevo", lista_campos_estado_nuevo)
     React_js = React_js.replace("lista_campo_data", lista_campo_data)
-    React_js = React_js.replace("lista_campo_tabla", lista_campo_tabla)
-    React_js = React_js.replace("lista_on_change", lista_on_change)
+    React_js = React_js.replace("//lista_campo_tabla", lista_campo_tabla)
+    React_js = React_js.replace("//lista_on_change", lista_on_change)
+    React_js = React_js.replace("lista_visualizar", lista_visualizar)
     React_js = React_js.replace("lista_inputs", lista_inputs)
-    React_js = React_js.replace("lista_campos_estado", lista_campos_estado)
+    React_js = React_js.replace("//lista_campos_estado", lista_campos_estado)
     React_js = React_js.replace("lista_campo_id_data", lista_campo_id_data)
+    React_js = React_js.replace("mk_clave_anexo", singular[1:])
     text_file = open(op_dir + "/salida/React/" + Plural + ".js", "w")
     text_file.write(React_js)
     text_file.close()
     print(op_dir + "/salida/React/" + Plural + ".js")
 
     #Rutas React
-    App_imports += "import " + Plural + " from \"./" + Plural + "\";\n"
-    App_route += "          <Route exact path=\"/" + plural + "\" component={" + Plural + "} />\n"
+    if Plural.startswith('F'):
+        App_imports += "import " + Plural + " from \"./formatos/" + Plural + "\";\n"
+        App_route += "          <Route exact path=\"/" + plural + "\" component={" + Plural + "} />\n"
+        App_route += "          <Route exact path=\"/" + plural + "/ambito/:ambito_id\" component={" + Plural + "} />\n"
+    else:
+        App_imports += "import " + Plural + " from \"./" + Plural + "\";\n"
+        App_route += "          <Route exact path=\"/" + plural + "\" component={" + Plural + "} />\n"
 
     #Rutas Laravel
     Web_php = Web_org_php

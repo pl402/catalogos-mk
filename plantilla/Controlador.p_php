@@ -15,6 +15,15 @@ class SingularController extends Controller
         }
     }
 
+    function indexambito(Request $request, $ambito_id){
+        if($request->isJson()){
+            $singular = Singular::where('ambito_id',$ambito_id)->get();
+            return response()->json($singular,200);
+        }else{
+            return response()->json(['error'=>'No Autorizado'],401);
+        }
+    }
+
     function store(Request $request){
         if($request->isJson()){
             $singular = new Singular;

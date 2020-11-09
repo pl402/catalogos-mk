@@ -1,10 +1,29 @@
 import React, { Component } from "react";
-import Layout from "./Layout";
+import Layout from "../Layout";
 import PropagateLoader from "react-spinners/PropagateLoader";
 import BootstrapTable from "react-bootstrap-table-next";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
-import { Modal, Button } from "react-bootstrap";
+import {
+  faPlus,
+  faEdit,
+  faTrash,
+  faEye,
+  faFileUpload,
+  faUpload,
+  faImage,
+  faFilePdf,
+  faQuestionCircle,
+} from "@fortawesome/free-solid-svg-icons";
+import {
+  Modal,
+  Button,
+  ButtonGroup,
+  Row,
+  Col,
+  OverlayTrigger,
+  Popover,
+  Form,
+} from "react-bootstrap";
 import ToolkitProvider, { Search } from "react-bootstrap-table2-toolkit";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
@@ -15,20 +34,26 @@ import "react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.m
 import paginationFactory from "react-bootstrap-table2-paginator";
 import ReactTooltip from "react-tooltip";
 
+import Galeria from "./Galeria";
+
 class Plural extends Component {
   constructor(props) {
     super(props);
     this.GetActionFormat = this.GetActionFormat.bind(this);
     this.state = {
       // Estado relacionado con el modelo
-lista_campos_estado
+      //lista_campos_estado
       // Estados para la ventana modal
       modal: false, // ventana modal generica para modificar y Nuevo cerrada
       modalEliminar: false, //Modal Eliminar
+      modalVisualizar: false, //Modal Visualizar
       modalAccion: "", // Acción del boton principal de la ventana modal para el switch
       modalTitle: "", // Titulo para la ventana modal generica
+      frm_lista_documentos: [], // Lista de documentos del registro
+      frm_archivo: null,
+      frm_descripcion_doc: "",
       plural: [], // Listado de elementos para la tabla
-      loading: false
+      loading: false,
     };
   }
 
@@ -41,15 +66,34 @@ lista_campos_estado
 
   cargaTabla = () => {
     this.setState({ loading: true });
-   axios({
-     method: "get",
-     url:
-       "url_laravel_apiSingular?api_token=" +
-       sessionStorage.api_token,
-     data: {},
-   }).then((res) => {
-     this.setState({ plural: res.data, loading: false });
-   });
+    axios({
+      method: "get",
+      url:
+        "url_laravel_apiSingular/ambito/" +
+        this.props.match.params.ambito_id +
+        "?api_token=" +
+        sessionStorage.api_token,
+      data: {},
+    }).then((res) => {
+      this.setState({ plural: res.data, loading: false });
+    });
+  };
+
+  cargaDocumentos = (id) => {
+    axios({
+      method: "get",
+      url:
+        "https://er.administracionpublica.mx/api/Documento/" +
+        this.props.match.params.ambito_id +
+        "/mk_clave_anexo/" +
+        id +
+        "?api_token=" +
+        sessionStorage.api_token,
+      data: {},
+    }).then((res) => {
+      this.closeModalDocumentos();
+      this.setState({ frm_lista_documentos: res.data, loading: false });
+    });
   };
 
   showModalEliminar = () => {
@@ -60,12 +104,59 @@ lista_campos_estado
     this.setState({ modalEliminar: false });
   };
 
+  showModalVisualizar = () => {
+    this.setState({ modalVisualizar: true });
+  };
+
+  closeModalVisualizar = () => {
+    this.setState({ modalVisualizar: false });
+  };
+
+  showModalDocumentos = () => {
+    this.setState({ modalDocumentos: true });
+  };
+
+  closeModalDocumentos = () => {
+    this.setState({ modalDocumentos: false });
+  };
+
   showModal = () => {
     this.setState({ modal: true });
   };
 
   closeModal = () => {
     this.setState({ modal: false });
+  };
+
+  onFileChange = (event) => {
+    this.setState({
+      frm_archivo: event.target.files[0],
+    });
+  };
+
+  sube_documento = (e) => {
+    e.preventDefault();
+    this.setState({ loading: true });
+
+    let datosFormulario = new FormData();
+    datosFormulario.append("archivo", this.state.frm_archivo);
+    datosFormulario.append("descripcion", this.state.frm_descripcion_doc);
+    datosFormulario.append("tipo", "jpg");
+    datosFormulario.append("anexo_cve", "mk_clave_anexo");
+    datosFormulario.append("fx_id", this.state.id);
+    datosFormulario.append("ambito_id", this.props.match.params.ambito_id);
+    datosFormulario.append("usuario_id", sessionStorage.id);
+    datosFormulario.append("api_token", sessionStorage.api_token);
+
+    let config = {};
+    axios
+      .post("url_laravel_apiDocumento/", datosFormulario, config)
+      .then((res) => {
+        this.closeModalDocumentos();
+        toast.success(res.data.text, { autoClose: 1000 });
+        this.cargaTabla();
+        this.setState({ loading: false });
+      });
   };
 
   ModalNuevo = () => {
@@ -75,30 +166,53 @@ lista_campos_estado
       variante: "primary",
       modalAccion: "insert",
       modalTitle: "Registro nuevo",
-lista_campos_estado_nuevo
+      lista_campos_estado_nuevo,
     });
   };
 
-  ModalModificar = row => {
+  ModalModificar = (row) => {
     this.showModal();
     this.setState({
       modalLabel: "Modificar",
       variante: "warning",
       modalAccion: "update",
       modalTitle: "Modificación",
-lista_campos_estado_row
+      lista_campos_estado_row,
     });
   };
 
-  ModalEliminar = row => {
+  ModalVisualizar = (row) => {
+    this.cargaDocumentos(row.id);
+    this.showModalVisualizar();
+    this.setState({
+      modalLabel: "Visualizar",
+      variante: "warning",
+      modalAccion: "view",
+      modalTitle: "Visualizar",
+      lista_campos_estado_row,
+    });
+  };
+
+  ModalDocumentos = (row) => {
+    this.showModalDocumentos();
+    this.setState({
+      modalLabel: "Documentos",
+      variante: "warning",
+      modalAccion: "document",
+      modalTitle: "Documentos",
+      lista_campos_estado_row,
+    });
+  };
+
+  ModalEliminar = (row) => {
     this.showModalEliminar();
     this.setState({
       modalAccion: "delete",
-lista_campos_estado_row
+      lista_campos_estado_row,
     });
   };
 
-  ejecutar = e => {
+  ejecutar = (e) => {
     e.preventDefault();
     this.setState({ loading: true });
     switch (this.state.modalAccion) {
@@ -118,36 +232,30 @@ lista_campos_estado_row
   registra = () => {
     let data = {
       //Recoger la información para el registro
-lista_campo_data,
-      api_token:sessionStorage.api_token
+      lista_campo_data,
+      api_token: sessionStorage.api_token,
     };
     let config = {};
 
-    axios
-      .post("url_laravel_apiSingular", data, config)
-      .then(res => {
-        this.closeModal();
-        toast.success(res.data.text, { autoClose: 1000 });
-        this.cargaTabla();
-        this.setState({ loading: false });
-      });
+    axios.post("url_laravel_apiSingular", data, config).then((res) => {
+      this.closeModal();
+      toast.success(res.data.text, { autoClose: 1000 });
+      this.cargaTabla();
+      this.setState({ loading: false });
+    });
   };
 
   actualiza = () => {
     let data = {
       //Recoger la información para el registro
-lista_campo_id_data,
-      api_token:sessionStorage.api_token
+      lista_campo_id_data,
+      api_token: sessionStorage.api_token,
     };
     let config = {};
 
     axios
-      .put(
-        "url_laravel_apiSingular/" + this.state.id,
-        data,
-        config
-      )
-      .then(res => {
+      .put("url_laravel_apiSingular/" + this.state.id, data, config)
+      .then((res) => {
         this.closeModal();
         toast.success(res.data.text, { autoClose: 1000 });
         this.cargaTabla();
@@ -155,7 +263,7 @@ lista_campo_id_data,
       });
   };
 
-    borra = () => {
+  borra = () => {
     let data = {
       api_token: sessionStorage.api_token,
     };
@@ -169,7 +277,7 @@ lista_campo_id_data,
         data,
         config
       )
-      .then(res => {
+      .then((res) => {
         this.closeModalEliminar();
         toast.success(res.data.text, { autoClose: 1000 });
         this.cargaTabla();
@@ -177,29 +285,53 @@ lista_campo_id_data,
       });
   };
 
-lista_on_change
+  //lista_on_change
+
+  onChangefrm_descripcion_doc = (e) => {
+    this.setState({ frm_descripcion_doc: e.target.value });
+  };
 
   GetActionFormat = (cell, row) => {
     return (
       <div>
-        <button
-          type="button"
-          className="btn btn-outline-primary btn-sm ts-buttom"
-          size="sm"
-          onClick={() => this.ModalModificar(row)}
-          data-tip="Modificar"
-        >
-          <FontAwesomeIcon icon={faEdit} size="lg" />
-        </button>
-        <button
-          type="button"
-          className="btn btn-outline-danger btn-sm ml-2 ts-buttom"
-          size="sm"
-          onClick={() => this.ModalEliminar(row)}
-          data-tip="Eliminar"
-        >
-          <FontAwesomeIcon icon={faTrash} size="lg" />
-        </button>
+        <ButtonGroup size="sm">
+          <button
+            type="button"
+            className="btn btn-outline-info btn-sm"
+            size="sm"
+            onClick={() => this.ModalVisualizar(row)}
+            data-tip="Visualizar"
+          >
+            <FontAwesomeIcon icon={faEye} size="lg" />
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline-primary btn-sm"
+            size="sm"
+            onClick={() => this.ModalModificar(row)}
+            data-tip="Modificar"
+          >
+            <FontAwesomeIcon icon={faEdit} size="lg" />
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline-warning btn-sm"
+            size="sm"
+            onClick={() => this.ModalDocumentos(row)}
+            data-tip="Documentos Adjuntos"
+          >
+            <FontAwesomeIcon icon={faFileUpload} size="lg" />
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline-danger btn-sm"
+            size="sm"
+            onClick={() => this.ModalEliminar(row)}
+            data-tip="Eliminar"
+          >
+            <FontAwesomeIcon icon={faTrash} size="lg" />
+          </button>
+        </ButtonGroup>
       </div>
     );
   };
@@ -209,24 +341,49 @@ lista_on_change
       {
         dataField: "id",
         text: "ID",
+        sort: true,
         headerStyle: () => {
-          return { width: "10%" };
-        }
+          return {
+            width: "100px",
+            zIndex: "98",
+          };
+        },
       },
-lista_campo_tabla
+      //lista_campo_tabla
       {
         dataField: "",
         text: "Acción",
         formatter: this.GetActionFormat,
-        classes: "p-1",
         headerStyle: () => {
-          return { width: "25%" };
-        }
-      }
+          return {
+            width: "140px",
+            zIndex: "99",
+          };
+        },
+      },
     ];
 
     const { SearchBar } = Search;
-
+    const popover = (
+      <Popover id="popover-basic">
+        <Popover.Title as="h3">Ayuda</Popover.Title>
+        <Popover.Content>{this.state.input_tooltip}</Popover.Content>
+      </Popover>
+    );
+    const lis_docs_id = this.state.frm_lista_documentos.map((el) => {
+      const url_doc =
+        "url_laravel_apisecuredocs/" +
+        el.filename +
+        "?api_token=" +
+        sessionStorage.api_token;
+      return (
+        <li key={el.id}>
+          <a href={url_doc} target="_blank">
+            {el.descripcion}
+          </a>
+        </li>
+      );
+    });
     return (
       <Layout>
         <ToastContainer />
@@ -249,10 +406,11 @@ lista_campo_tabla
         <div className="container mt-3">
           <div className="row">
             <div className="col">
-              <h3 className="d-inline">Catálogo de Plural</h3>{" "}
+              <h3 className="d-inline">Titulo_Formulario</h3>
+              <br />
               <small className="text-muted">
-                Registre Elimine o Modifique Plural,
-                estos elementos estan ligados a los usuarios de el sistema.
+                Registre Elimine o Modifique Plural, estos elementos estan
+                ligados a los usuarios de el sistema.
               </small>
             </div>
           </div>
@@ -266,7 +424,7 @@ lista_campo_tabla
                 bootstrap4
                 search
               >
-                {props => (
+                {(props) => (
                   <div>
                     <div className="row">
                       <div className="col-6">
@@ -302,14 +460,14 @@ lista_campo_tabla
         <Modal //***************************Modal para nuevo y modificar
           show={this.state.modal}
           onHide={this.closeModal}
-          size="lg"
+          dialogClassName="modal-90w"
           centered
         >
           <Modal.Header closeButton>
             <Modal.Title>{this.state.modalTitle}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-lista_inputs
+            <Form.Row>lista_inputs</Form.Row>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={this.closeModal}>
@@ -343,6 +501,114 @@ lista_inputs
             </Button>
           </Modal.Footer>
         </Modal>
+
+        <Modal //*******************************Modal para visializar
+          show={this.state.modalVisualizar}
+          onHide={this.closeModalVisualizar}
+          dialogClassName="modal-90w"
+          centered
+        >
+          <Modal.Header>
+            <Modal.Title>Visualizar</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Modal.Body className="show-grid">
+              <Row>
+                <Col xs={12} md={8}>
+                  <h5>Datos del Registro</h5>
+                  lista_visualizar
+                </Col>
+                <Col xs={12} md={4}>
+                  <Row>
+                    <Col xs={12}>
+                      <h5>Archivos Adjuntos</h5>
+                    </Col>
+                    <Col xs={12}>
+                      <ul>{lis_docs_id}</ul>
+                    </Col>
+                    <Col xs={12}>
+                      <Galeria imagenes={this.state.frm_lista_documentos} />
+                    </Col>
+                  </Row>
+                </Col>
+              </Row>
+            </Modal.Body>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={this.closeModalVisualizar}>
+              Cancelar
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        <Modal //*******************************Modal para Documentos
+          show={this.state.modalDocumentos}
+          onHide={this.closeModalDocumentos}
+          dialogClassName="modal-90w"
+          centered
+        >
+          <Modal.Header>
+            <Modal.Title>Documentos</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Modal.Body>
+              <Form.Row>
+                <Col xs="12">
+                  <Form.Label>
+                    Descripcion del Archivo:
+                    <OverlayTrigger
+                      trigger="focus"
+                      placement="right"
+                      overlay={popover}
+                    >
+                      <Button
+                        variant="light"
+                        onClick={(e) => {
+                          this.setState({
+                            input_tooltip:
+                              "Ingrese un texto descriptivo del documento que se va a subir.",
+                          });
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faQuestionCircle} />
+                      </Button>
+                    </OverlayTrigger>
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="frm_descripcion_doc"
+                    onChange={this.onChangefrm_descripcion_doc}
+                  />
+                </Col>
+              </Form.Row>
+              <Form.Row>
+                <Col xs="12">
+                  <br />
+                  <label htmlFor="file-upload" className="custom-file-upload">
+                    <FontAwesomeIcon icon={faUpload} /> Seleccionar Archivo PDF
+                    o Imagen
+                  </label>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    onChange={this.onFileChange}
+                    accept="image/png, image/jpeg, application/pdf"
+                    className="btnSubir"
+                  />
+                </Col>
+              </Form.Row>
+            </Modal.Body>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={this.closeModalDocumentos}>
+              Cancelar
+            </Button>
+            <Button variant={this.state.variante} onClick={this.sube_documento}>
+              Guardar Documento
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
         <ReactTooltip />
       </Layout>
     );

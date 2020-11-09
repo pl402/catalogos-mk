@@ -4,3 +4,4 @@ $router->post('/Singular', 'SingularController@store');
 $router->get('/Singular/{id}', 'SingularController@show');
 $router->put('/Singular/{id}', 'SingularController@update');
 $router->delete('/Singular/{id}', 'SingularController@destroy');
+$router->get('/Singular/ambito/{ambito_id}', 'SingularController@indexambito');
