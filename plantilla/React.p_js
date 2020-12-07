@@ -210,7 +210,7 @@ lista_on_change
         dataField: "id",
         text: "ID",
         headerStyle: () => {
-          return { width: "10%" };
+          return { width: "100px" };
         }
       },
 lista_campo_tabla
@@ -220,7 +220,7 @@ lista_campo_tabla
         formatter: this.GetActionFormat,
         classes: "p-1",
         headerStyle: () => {
-          return { width: "25%" };
+          return { width: "140px" };
         }
       }
     ];

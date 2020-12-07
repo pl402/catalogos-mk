@@ -1,7 +1,7 @@
 {
-  "host": "er.administracionpublica.mx",
-  "user": "admin_er",
-  "password": "cOZ0yoZxV3",
-  "database": "admin_er",
-  "url_laravel_api": "https://er.administracionpublica.mx/api/"
+  "host": "bunker.siapp.mx",
+  "user": "admin_bunker",
+  "password": "e8DMvvzQqz",
+  "database": "admin_bunker",
+  "url_laravel_api": "https://bunker.siapp.mx/api/"
 }
