@@ -1,7 +1,7 @@
 {
-  "host": "bunker.siapp.mx",
-  "user": "admin_bunker",
-  "password": "e8DMvvzQqz",
-  "database": "admin_bunker",
-  "url_laravel_api": "https://bunker.siapp.mx/api/"
+  "host": "HOST",
+  "user": "USER",
+  "password": "PASS",
+  "database": "DATABASE",
+  "url_laravel_api": "https://URL.COM/API"
 }
