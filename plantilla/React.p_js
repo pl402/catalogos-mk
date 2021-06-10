@@ -8,11 +8,9 @@ import {
   faEdit,
   faTrash,
   faEye,
-  faFileUpload,
-  faUpload,
-  faImage,
   faFilePdf,
   faQuestionCircle,
+  faFileExcel,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   Modal,
@@ -23,6 +21,7 @@ import {
   OverlayTrigger,
   Popover,
   Form,
+  ButtonToolbar,
 } from "react-bootstrap";
 import ToolkitProvider, { Search } from "react-bootstrap-table2-toolkit";
 import axios from "axios";
@@ -33,7 +32,7 @@ import "react-bootstrap-table-next/dist/react-bootstrap-table2.min.css";
 import "react-bootstrap-table2-paginator/dist/react-bootstrap-table2-paginator.min.css";
 import paginationFactory from "react-bootstrap-table2-paginator";
 import ReactTooltip from "react-tooltip";
-
+import Adjunto from "./Adjunto";
 import Galeria from "./Galeria";
 
 class Plural extends Component {
@@ -72,7 +71,7 @@ class Plural extends Component {
         "url_laravel_apiSingular/ambito/" +
         this.props.match.params.ambito_id +
         "?api_token=" +
-        sessionStorage.api_token,
+        localStorage.api_token,
       data: {},
     }).then((res) => {
       this.setState({ plural: res.data, loading: false });
@@ -88,12 +87,16 @@ class Plural extends Component {
         "/mk_clave_anexo/" +
         id +
         "?api_token=" +
-        sessionStorage.api_token,
+        localStorage.api_token,
       data: {},
     }).then((res) => {
       this.closeModalDocumentos();
       this.setState({ frm_lista_documentos: res.data, loading: false });
     });
+  };
+
+  closeModalDocumentos = () => {
+    this.setState({ modalDocumentos: false });
   };
 
   showModalEliminar = () => {
@@ -112,51 +115,12 @@ class Plural extends Component {
     this.setState({ modalVisualizar: false });
   };
 
-  showModalDocumentos = () => {
-    this.setState({ modalDocumentos: true });
-  };
-
-  closeModalDocumentos = () => {
-    this.setState({ modalDocumentos: false });
-  };
-
   showModal = () => {
     this.setState({ modal: true });
   };
 
   closeModal = () => {
     this.setState({ modal: false });
-  };
-
-  onFileChange = (event) => {
-    this.setState({
-      frm_archivo: event.target.files[0],
-    });
-  };
-
-  sube_documento = (e) => {
-    e.preventDefault();
-    this.setState({ loading: true });
-
-    let datosFormulario = new FormData();
-    datosFormulario.append("archivo", this.state.frm_archivo);
-    datosFormulario.append("descripcion", this.state.frm_descripcion_doc);
-    datosFormulario.append("tipo", "jpg");
-    datosFormulario.append("anexo_cve", "mk_clave_anexo");
-    datosFormulario.append("fx_id", this.state.id);
-    datosFormulario.append("ambito_id", this.props.match.params.ambito_id);
-    datosFormulario.append("usuario_id", sessionStorage.id);
-    datosFormulario.append("api_token", sessionStorage.api_token);
-
-    let config = {};
-    axios
-      .post("url_laravel_apiDocumento/", datosFormulario, config)
-      .then((res) => {
-        this.closeModalDocumentos();
-        toast.success(res.data.text, { autoClose: 1000 });
-        this.cargaTabla();
-        this.setState({ loading: false });
-      });
   };
 
   ModalNuevo = () => {
@@ -193,17 +157,6 @@ class Plural extends Component {
     });
   };
 
-  ModalDocumentos = (row) => {
-    this.showModalDocumentos();
-    this.setState({
-      modalLabel: "Documentos",
-      variante: "warning",
-      modalAccion: "document",
-      modalTitle: "Documentos",
-      lista_campos_estado_row,
-    });
-  };
-
   ModalEliminar = (row) => {
     this.showModalEliminar();
     this.setState({
@@ -233,7 +186,7 @@ class Plural extends Component {
     let data = {
       //Recoger la información para el registro
       lista_campo_data,
-      api_token: sessionStorage.api_token,
+      api_token: localStorage.api_token,
     };
     let config = {};
 
@@ -249,7 +202,7 @@ class Plural extends Component {
     let data = {
       //Recoger la información para el registro
       lista_campo_id_data,
-      api_token: sessionStorage.api_token,
+      api_token: localStorage.api_token,
     };
     let config = {};
 
@@ -265,7 +218,7 @@ class Plural extends Component {
 
   borra = () => {
     let data = {
-      api_token: sessionStorage.api_token,
+      api_token: localStorage.api_token,
     };
     let config = {};
     axios
@@ -273,7 +226,7 @@ class Plural extends Component {
         "url_laravel_apiSingular/" +
           this.state.id +
           "?api_token=" +
-          sessionStorage.api_token,
+          localStorage.api_token,
         data,
         config
       )
@@ -313,15 +266,11 @@ class Plural extends Component {
           >
             <FontAwesomeIcon icon={faEdit} size="lg" />
           </button>
-          <button
-            type="button"
-            className="btn btn-outline-warning btn-sm"
-            size="sm"
-            onClick={() => this.ModalDocumentos(row)}
-            data-tip="Documentos Adjuntos"
-          >
-            <FontAwesomeIcon icon={faFileUpload} size="lg" />
-          </button>
+          <Adjunto
+            ambito_id={this.props.match.params.ambito_id}
+            formato={"Num_Formato"}
+            id={row.id}
+          />
           <button
             type="button"
             className="btn btn-outline-danger btn-sm"
@@ -338,17 +287,6 @@ class Plural extends Component {
 
   render() {
     const columns = [
-      {
-        dataField: "id",
-        text: "ID",
-        sort: true,
-        headerStyle: () => {
-          return {
-            width: "100px",
-            zIndex: "98",
-          };
-        },
-      },
       //lista_campo_tabla
       {
         dataField: "",
@@ -375,7 +313,7 @@ class Plural extends Component {
         "url_laravel_apisecuredocs/" +
         el.filename +
         "?api_token=" +
-        sessionStorage.api_token;
+        localStorage.api_token;
       return (
         <li key={el.id}>
           <a href={url_doc} target="_blank">
@@ -409,8 +347,8 @@ class Plural extends Component {
               <h3 className="d-inline">Titulo_Formulario</h3>
               <br />
               <small className="text-muted">
-                Registre Elimine o Modifique Plural, estos elementos estan
-                ligados a los usuarios de el sistema.
+                Gestione la información del formato numero Num_Formato referente
+                a Nombre_Forumulario.
               </small>
             </div>
           </div>
@@ -428,13 +366,50 @@ class Plural extends Component {
                   <div>
                     <div className="row">
                       <div className="col-6">
-                        <button
-                          className="btn btn-primary"
-                          onClick={this.ModalNuevo}
-                          data-tip="Nuevo"
-                        >
-                          <FontAwesomeIcon icon={faPlus} /> Nuevo
-                        </button>
+                        <ButtonToolbar aria-label="Toolbar with button groups">
+                          <ButtonGroup
+                            className="mr-2"
+                            aria-label="First group"
+                          >
+                            <button
+                              className="btn btn-primary"
+                              onClick={this.ModalNuevo}
+                              data-tip="Nuevo"
+                            >
+                              <FontAwesomeIcon icon={faPlus} /> Nuevo
+                            </button>
+                          </ButtonGroup>
+                          <ButtonGroup
+                            className="mr-2"
+                            aria-label="Second group"
+                          >
+                            <a
+                              className="btn btn-primary"
+                              data-tip="Descarga PDF"
+                              target="_blank"
+                              href={
+                                "https://er.administracionpublica.mx/pdf/?a=" +
+                                this.props.match.params.ambito_id +
+                                "&f=mk_clave_anexo"
+                              }
+                            >
+                              <FontAwesomeIcon icon={faFilePdf} /> Descargar PDF
+                            </a>
+                            <a
+                              className="btn btn-primary"
+                              data-tip="Descarga PDF"
+                              target="_blank"
+                              href={
+                                "https://er.administracionpublica.mx/xlsx/?a=" +
+                                this.props.match.params.ambito_id +
+                                "&f=mk_clave_anexo"
+                              }
+                            >
+                              <FontAwesomeIcon icon={faFileExcel} /> Descargar
+                              Excel
+                            </a>
+                          </ButtonGroup>
+                        </ButtonToolbar>
                       </div>
                       <div className="col-6 text-right">
                         <SearchBar
@@ -540,75 +515,6 @@ class Plural extends Component {
             </Button>
           </Modal.Footer>
         </Modal>
-
-        <Modal //*******************************Modal para Documentos
-          show={this.state.modalDocumentos}
-          onHide={this.closeModalDocumentos}
-          dialogClassName="modal-90w"
-          centered
-        >
-          <Modal.Header>
-            <Modal.Title>Documentos</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Modal.Body>
-              <Form.Row>
-                <Col xs="12">
-                  <Form.Label>
-                    Descripcion del Archivo:
-                    <OverlayTrigger
-                      trigger="focus"
-                      placement="right"
-                      overlay={popover}
-                    >
-                      <Button
-                        variant="light"
-                        onClick={(e) => {
-                          this.setState({
-                            input_tooltip:
-                              "Ingrese un texto descriptivo del documento que se va a subir.",
-                          });
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faQuestionCircle} />
-                      </Button>
-                    </OverlayTrigger>
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="frm_descripcion_doc"
-                    onChange={this.onChangefrm_descripcion_doc}
-                  />
-                </Col>
-              </Form.Row>
-              <Form.Row>
-                <Col xs="12">
-                  <br />
-                  <label htmlFor="file-upload" className="custom-file-upload">
-                    <FontAwesomeIcon icon={faUpload} /> Seleccionar Archivo PDF
-                    o Imagen
-                  </label>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    onChange={this.onFileChange}
-                    accept="image/png, image/jpeg, application/pdf"
-                    className="btnSubir"
-                  />
-                </Col>
-              </Form.Row>
-            </Modal.Body>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={this.closeModalDocumentos}>
-              Cancelar
-            </Button>
-            <Button variant={this.state.variante} onClick={this.sube_documento}>
-              Guardar Documento
-            </Button>
-          </Modal.Footer>
-        </Modal>
-
         <ReactTooltip />
       </Layout>
     );
