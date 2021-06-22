@@ -51,7 +51,7 @@ if not os.path.exists(op_dir + "/salida/React"):
     os.makedirs(op_dir + "/salida/React")
 
 #Solo crea seleccionados
-listaTablas = ['f94']
+listaTablas = ['f52', 'f52a']
 
 for tablas in data: 
     Modelo_php = ''
@@ -187,10 +187,10 @@ for tablas in data:
         Modelo_php = Modelo_php.replace("tabla", tabla)
         Modelo_php = Modelo_php.replace("Singular", Singular)
         Modelo_php = Modelo_php.replace("lista_campos", lista_campos)
-        text_file = open(op_dir + "/salida/Modelos/" + Singular + ".php", "w")
+        text_file = open("/home/elias/Proyectos/er/laravel/app/" + Singular + ".php", "w")
         text_file.write(Modelo_php)
         text_file.close()
-        print(op_dir + "/salida/Modelos/" + Singular + ".php")
+        print("/home/elias/Proyectos/er/laravel/app/" + Singular + ".php")
 
         #Controlador
         f = open(op_dir + "/plantilla/Controlador.p_php", "r")
@@ -199,10 +199,10 @@ for tablas in data:
         Controlador_php = Controlador_php.replace("Singular", Singular)
         Controlador_php = Controlador_php.replace("singular", singular)
         Controlador_php = Controlador_php.replace("lista_campos_controlador", lista_campos_controlador)
-        text_file = open(op_dir + "/salida/Controlador/" + Singular + "Controller.php", "w")
+        text_file = open("/home/elias/Proyectos/er/laravel/app/Http/Controllers/" + Singular + "Controller.php", "w")
         text_file.write(Controlador_php)
         text_file.close()
-        print(op_dir + "/salida/Controlador/" + Singular + "Controller.php")
+        print("/home/elias/Proyectos/er/laravel/app/Http/Controllers/" + Singular + "Controller.php")
 
         #React
         f = open(op_dir + "/plantilla/React.p_js", "r")
@@ -226,10 +226,10 @@ for tablas in data:
         React_js = React_js.replace("//lista_campos_estado", lista_campos_estado)
         React_js = React_js.replace("lista_campo_id_data", lista_campo_id_data)
         React_js = React_js.replace("mk_clave_anexo", singular[1:])
-        text_file = open(op_dir + "/salida/React/" + Plural + ".js", "w")
+        text_file = open("/home/elias/Proyectos/er/src/formatos/" + Plural + ".js", "w")
         text_file.write(React_js)
         text_file.close()
-        print(op_dir + "/salida/React/" + Plural + ".js")
+        print("/home/elias/Proyectos/er/src/formatos/" + Plural + ".js")
 
         #Rutas React
         if Plural.startswith('F'):

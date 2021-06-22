@@ -347,7 +347,7 @@ class Plural extends Component {
               <h3 className="d-inline">Titulo_Formulario</h3>
               <br />
               <small className="text-muted">
-                Gestione la información del formato numero Num_Formato referente
+                Gestione la información del anexo numero Num_Formato referente
                 a Nombre_Forumulario.
               </small>
             </div>
